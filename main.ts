@@ -111,13 +111,16 @@ namespace knockbit {
                 break;
             // 2018-11-3 新增读取板载传感器
             case "lll": // 光强度
-                return input.lightLevel;
+                sendSuperMessage(cmd + input.lightLevel);
+                break;
             case "acc": // 加速度计
-                return input.acceleration(parseInt(arg));
+                sendSuperMessage(cmd + arg + input.acceleration(parseInt(arg)));
+                break;
             case "com": // 磁力计（电子罗盘）
-                return input.magneticForce(parseInt(arg));
+                sendSuperMessage(cmd + arg + input.magneticForce(parseInt(arg)));
+                break;
             case "tem": // 温度计
-                return input.temperature;
+                sendSuperMessage(cmd + input.temperature);
             default:    // 未知的消息
                 break;
         }
