@@ -1,26 +1,16 @@
-
-
-
-/**
- * 2018-11-03 此版本是最小版本的蓝牙控制，
- * 1、只保留了microbit基本功能，neopixel和robotbit等都作为附加包加载
- * 2、增加了蓝牙连接时，蓝牙断开时的额外命令，可以用来初始化/清理状态
- * 3、增加了读取传感器的功能，同样在小程序中增加了对于模块
- *
- */
-
-// 2018-10-07 makecode的substr默认长度10？太坑了
-// 2018-11-04 makecode.microbit.org v1.0 貌似对自动解析回调类还是有bug
-
 //% color=#3062dB weight=96 icon="\uf294" block="KNOCKBIT"
 namespace knockbit {
 
+    export function setupApp() {
+        sendSuperMessage("mod" + "microbit");// 设置库类型
+        ledOnBoard("llp");  // 板载led 5*5状态
+        // sendSuperMessage("lnp"+pixelCount);  // 设置lnp（neopixels数量）
+    }
 
     export class MessageContainer {
         public cmd: string;
         public args: string;
     }
-
 
     //let delimiter = "^";
     let terminator = "\n";
@@ -136,6 +126,8 @@ namespace knockbit {
             case "tem": // 温度计
                 sendSuperMessage(cmd + input.temperature());
                 break;
+            case "set": // 初始化小程序
+                setupApp();
             default:    // 未知的消息
                 break;
         }
@@ -158,8 +150,8 @@ namespace knockbit {
                 music.playTone(parseInt(frequency), currentDuration * tonebeat);
                 break;
             case "ring":
-                if (tonebeat > 0)   // 等于0的时候放开就停止演奏
-                    basic.pause(tonebeat * currentDuration - (input.runningTime() - toneStartTime) % tonebeat);
+                //if (tonebeat > 0)   // 等于0的时候放开就停止演奏
+                //    basic.pause(tonebeat * currentDuration - (input.runningTime() - toneStartTime) % tonebeat);
                 if (arg.length > 5) {
                     frequency = arg.substr(0, 4);
                     let duration = parseInt(arg.substr(5, 1));
@@ -387,4 +379,5 @@ namespace knockbit {
         //     strip.show();
         // }
     }
+
 }
