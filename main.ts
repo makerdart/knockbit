@@ -7,11 +7,6 @@ namespace knockbit {
         // sendSuperMessage("lnp"+pixelCount);  // 设置lnp（neopixels数量）
     }
 
-    export class MessageContainer {
-        public cmd: string;
-        public args: string;
-    }
-
     //let delimiter = "^";
     let terminator = "\n";
 
@@ -29,7 +24,7 @@ namespace knockbit {
     class LinkedKeyHandlerList {
         key: string;
         // microbit中的callbak最多支持3个参数
-        callback: (container: MessageContainer) => void;
+        callback: (container: Message) => void;
         next: LinkedKeyHandlerList
     }
 
@@ -43,11 +38,11 @@ namespace knockbit {
         next: LinkedIdHandlerList
     }
 
-    let messageContainer = new MessageContainer;
+    let messageContainer = new Message;
 
     /**
      * onCmdReceived 
-     * @param cmd The cmd; eg: "---"
+     * @param cmd
      * @param callback 
      */
     //% mutate=objectdestructuring
@@ -55,7 +50,7 @@ namespace knockbit {
     //% mutateDefaults="cmd,args"
     //% blockId=knock_robot_neopixel_onCmdReceived
     //% block="当收到蓝牙数据时 |命令 %cmd"
-    export function onCmdReceived(cmd: string, callback: (message: MessageContainer) => void) {
+    export function onCmdReceived(cmd: string, callback: (message: Message) => void) {
         let newHandler = new LinkedKeyHandlerList()
         newHandler.callback = callback;
         newHandler.key = cmd;
