@@ -42,7 +42,7 @@ namespace knockbit {
 
     /**
      * onCmdReceived 
-     * @param cmd
+     * @param cmd The cmd; eg: "---"
      * @param callback 
      */
     //% mutate=objectdestructuring
