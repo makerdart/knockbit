@@ -9,6 +9,7 @@
     },
     "files": [
         "README.md",
+        "MessageContainer.ts",
         "main.ts"
     ],
     "testFiles": [
