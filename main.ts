@@ -1,25 +1,17 @@
 //% color=#3062dB weight=96 icon="\uf294" block="KNOCKBIT"
 namespace knockbit {
 
-    export function setupApp() {
+    let terminator = "\n";  // 传输终结符
+
+   let BluetoothConnected: boolean = false; // 蓝牙已连接
+
+    // 连接蓝牙后进行初始化
+    function setupApp() {
         sendSuperMessage("mod" + "microbit");// 设置库类型
         ledOnBoard("llp");  // 板载led 5*5状态
-        // sendSuperMessage("lnp"+pixelCount);  // 设置lnp（neopixels数量）
     }
 
-    //let delimiter = "^";
-    let terminator = "\n";
-
-    //let MIN_SEND_TIMEOUT = 100; // 最小发送间隔，500
-    //let us = 0
-    let BluetoothConnected: boolean = false
-
-    //let SCAN_ULTRASONIC = false;// 超声波扫描前方障碍物
     let CMD_HANDLERS: LinkedKeyHandlerList = null;  // 自定义命令处理器
-    //let UD_HANDLERS: LinkedIdHandlerList = null;  // 用户自动发送数据处理器
-    // ROBOTBIT内建4个LED灯
-    //let strip: neopixel.Strip = null;
-    //let pixelCount = 0;// 默认4个pixel灯
 
     class LinkedKeyHandlerList {
         key: string;
@@ -32,11 +24,11 @@ namespace knockbit {
         callback: () => void;
     }
 
-    class LinkedIdHandlerList {
-        id: number;
-        callback: () => void;
-        next: LinkedIdHandlerList
-    }
+    // class LinkedIdHandlerList {
+    //     id: number;
+    //     callback: () => void;
+    //     next: LinkedIdHandlerList
+    // }
 
     let messageContainer = new Message;
 
@@ -48,7 +40,7 @@ namespace knockbit {
     //% mutate=objectdestructuring
     //% mutateText="message"
     //% mutateDefaults="cmd,args"
-    //% blockId=knock_robot_neopixel_onCmdReceived
+    //% blockId=knock_onCmdReceived
     //% block="当收到蓝牙数据时 |命令 %cmd"
     export function onCmdReceived(cmd: string, callback: (message: Message) => void) {
         let newHandler = new LinkedKeyHandlerList()
@@ -58,33 +50,22 @@ namespace knockbit {
         CMD_HANDLERS = newHandler;
     }
 
-    let onBluetoothConnectedHandler: VoidHandle = null;
+ 
+   let onBluetoothConnectedHandler: VoidHandle = null;
+    //% blockId=knock_onBluetoothConnected
+    //% block="当蓝牙连接成功时"
     export function onBluetoothConnected(callback: () => void) {
         onBluetoothConnectedHandler = new VoidHandle()
         onBluetoothConnectedHandler.callback = callback;
     }
 
     let onBluetoothDisconnectedHandler: VoidHandle = null;
+    //% blockId=knock_onBluetoothDisconnectedHandler
+    //% block="当蓝牙断开连接时"
     export function onBluetoothDisconnected(callback: () => void) {
         onBluetoothDisconnectedHandler = new VoidHandle();
         onBluetoothDisconnectedHandler.callback = callback;
     }
-
-    // let splitString = (splitOnChar: string, input: string) => {
-    //     let result: string[] = []
-    //     let count = 0
-    //     let startIndex = 0
-    //     for (let index = 0; index < input.length; index++) {
-    //         if (input.charAt(index) == splitOnChar) {
-    //             result[count] = input.substr(startIndex, index - startIndex)
-    //             startIndex = index + 1
-    //             count = count + 1
-    //         }
-    //     }
-    //     if (startIndex != input.length)
-    //         result[count] = input.substr(startIndex, input.length - startIndex)
-    //     return result;
-    // }
 
     function handleMessage(cmd: string, arg: string) {
         switch (cmd) {    // 1开启自动发送，0关闭自动发送
@@ -98,10 +79,6 @@ namespace knockbit {
                 basic.showIcon(parseInt(arg));
                 ledOnBoard("llp");// 回发板载led信息给敲比特
                 break;
-            // case "led": // 点亮Microbit自带LED
-            // case "lnp": // 2018-7-24 更新为led neo pixel
-            //     showLed(arg);
-            //     break;
             case "lob": // led on-board 板载 5*5led
                 ledOnBoard(arg);
                 break;
@@ -171,7 +148,7 @@ namespace knockbit {
     }
 
 
-    //% blockId=knock_robot_neopixel_getLedPlots
+    //% blockId=knock_getLedPlots
     //% block="读取led5*5状态，按位组成一个整数返回"
     function getLedPlots(): number {
         let plots = 0;
@@ -209,45 +186,8 @@ namespace knockbit {
         }
     }
 
-    // 处理用户自定义自动发送信息
-    // function UsesDefinedMessage(arg: string) {
-    //     // 2位ID，为了扩展，暂时其实只用到1位，不使用0，从1开始
-    //     let id = parseInt(arg.substr(0, 2));
-    //     if (id == 0 || id > UD_MAX_ID) return; // ID不合法，反馈
-    //     let enable = parseInt(arg.substr(3, 1)); // 0 停止，1开始
-    //     let timeout = parseInt(arg.substr(4, 4)); // 发送延迟，不能小于min
-    //     UD_TIMEOUT[id - 1] = timeout > MIN_SEND_TIMEOUT ? timeout : MIN_SEND_TIMEOUT;
-    //     UD_NEXTTIME[id - 1] = input.runningTime();
-
-    //     UD_AUTO_SEND[id - 1] = enable == 1; // 设置自动发送
-    // }
-
-
-    // 板载pixel led？其实microbit不带，但大多数扩展带
-    // function showLed(arg: string) {
-    //     //basic.showString(arg);
-    //     if (strip == null || pixelCount == 0)
-    //         return;
-
-    //     if (arg[0] == '-') { // 返回pixel灯数量
-    //         bluetooth.uartWriteString("pix" + pixelCount)
-    //         return;
-    //     }
-
-    //     // 前6位rgb颜色，后面的是LED位置
-    //     let ledstr = arg.substr(6, arg.length - 6);
-    //     let rgb = parseInt("0x" + arg.substr(0, 6));
-    //     let leds = splitString("|", ledstr);
-    //     //basic.showNumber(leds.length);
-    //     for (let i = 0; i < leds.length; i++) {
-    //         strip.setPixelColor(parseInt(leds[i]), rgb);
-
-    //     }
-    //     strip.show();
-    // }
-
-    //% blockId=knock_robot_neopixel_isBluetoothConnected
-    //% block="是否已通过蓝牙连接"
+    //% blockId=knock_isBluetoothConnected
+    //% block="蓝牙连接已连接"
     export function isBluetoothConnected(): boolean {
         return BluetoothConnected;
     }
@@ -302,7 +242,7 @@ namespace knockbit {
       * init microbit with robotbit and neopixel
       * @param id The id; eg: 1
     */
-    //% blockId=knock_robot_neopixel_sendUserMessage
+    //% blockId=knock_sendUserMessage
     //% block="发送用户消息 |id（0~9） %id | 消息（最大长度17） %msg"
     export function sendUserMessage(id: number, msg: string) {
         if (BluetoothConnected) {
@@ -310,7 +250,7 @@ namespace knockbit {
         }
     }
 
-    //% blockId=knock_robot_neopixel_sendSuperMessage
+    //% blockId=knock_sendSuperMessage
     //% block="发送超级消息 | 消息（最大长度20） %msg"
     export function sendSuperMessage(msg: string) {
         if (BluetoothConnected) {
@@ -322,7 +262,7 @@ namespace knockbit {
       * @param autoHandle auto handle message. eg: true
       * @param pixelCount the count of pixel. eg: 4
       */
-    //% blockId=knock_robot_neopixel_init
+    //% blockId=knock_init
     //% block="初始化 |自动处理消息 %autoHandle"
     export function init(autoHandle: boolean) {
         bluetooth.startUartService();
