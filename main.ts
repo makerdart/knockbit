@@ -7,7 +7,7 @@ namespace knockbit {
 
     // 连接蓝牙后进行初始化
     function setupApp() {
-        sendSuperMessage("mod" + "microbit");// 设置库类型
+        //sendSuperMessage("mod" + "microbit");// 设置库类型
         ledOnBoard("llp");  // 板载led 5*5状态
     }
 
@@ -31,6 +31,12 @@ namespace knockbit {
     // }
 
     let messageContainer = new Message;
+
+ //% blockId=knock_setMode
+    //% block="设置模式 |模式 %mode"
+    export function setMode(mode:string){
+        sendSuperMessage("mod" + mode);
+    }
 
     /**
      * onCmdReceived 
@@ -239,7 +245,7 @@ namespace knockbit {
         }
     }
     /**
-      * init microbit with robotbit and neopixel
+      * init microbit
       * @param id The id; eg: 1
     */
     //% blockId=knock_sendUserMessage
@@ -258,9 +264,8 @@ namespace knockbit {
         }
     }
     /**
-      * init microbit with robotbit and neopixel
+      * init microbit
       * @param autoHandle auto handle message. eg: true
-      * @param pixelCount the count of pixel. eg: 4
       */
     //% blockId=knock_init
     //% block="初始化 |自动处理消息 %autoHandle"

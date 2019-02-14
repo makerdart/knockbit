@@ -1,7 +1,7 @@
 /**
  * Control of the LED screen.
  */
-//% color=#5C2D91 weight=97 icon="\uf205"
+//% color=#5C2D91 weight=101 icon="\uf205"
     namespace led {
 
     // what's the current high value
@@ -16,22 +16,28 @@
      * @param high maximum value. If 0, maximum value adjusted automatically, eg: 0
      */
     //% help=led/plot-bar-graph weight=20
-    //% blockId=device_plot_bar_graph block="plot bar graph of %value |up to %high" icon="\uf080" blockExternalInputs=true
+    //% blockId=device_plot_bar_graph block="plot bar graph of %value up to %high" icon="\uf080" blockExternalInputs=true
     //% parts="ledmatrix"
     export function plotBarGraph(value: number, high: number): void {
-        let now = input.runningTime();
-        serial.writeLine(value.toString());
+        const now = input.runningTime();
+        console.logValue("", value);
         value = Math.abs(value);
 
-        if (high != 0) barGraphHigh = high;
-        else if (value > barGraphHigh || now - barGraphHighLast > 10000) {
+        // auto-scale "high" is not provided
+        if (high > 0) {
+            barGraphHigh = high;
+        } else if (value > barGraphHigh || now - barGraphHighLast > 10000) {
             barGraphHigh = value;
             barGraphHighLast = now;
         }
 
-        barGraphHigh = Math.max(barGraphHigh, 16);
+        // normalize lack of data to 0..1
+        if (barGraphHigh < 16 * Number.EPSILON)
+            barGraphHigh = 1;
 
-        let v = (value * 15) / barGraphHigh;
+        // normalize value to 0..1
+        const v = value / barGraphHigh;
+        const dv = 1 / 16;
         let k = 0;
         for (let y = 4; y >= 0; --y) {
             for (let x = 0; x < 3; ++x) {
@@ -42,7 +48,7 @@
                     plot(2 - x, y);
                     plot(2 + x, y);
                 }
-                ++k;
+                k += dv;
             }
         }
     }
@@ -56,6 +62,7 @@
     //% blockId=device_led_toggle block="toggle|x %x|y %y" icon="\uf204" blockGap=8
     //% parts="ledmatrix"
     //% x.min=0 x.max=4 y.min=0 y.max=4
+    //% x.fieldOptions.precision=1 y.fieldOptions.precision=1
     export function toggle(x: number, y: number): void {
         if (led.point(x, y)) {
             led.unplot(x, y);

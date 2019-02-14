@@ -2,6 +2,7 @@
 
 #define MICROBIT_SERIAL_READ_BUFFER_LENGTH 64
 
+// make sure USB_TX and USB_RX don't overlap with other pin ids
 enum SerialPin {
     P0 = MICROBIT_ID_IO_P0,
     P1 = MICROBIT_ID_IO_P1,
@@ -11,7 +12,9 @@ enum SerialPin {
     P13 = MICROBIT_ID_IO_P13,
     P14 = MICROBIT_ID_IO_P14,
     P15 = MICROBIT_ID_IO_P15,
-    P16 = MICROBIT_ID_IO_P16
+    P16 = MICROBIT_ID_IO_P16,
+    USB_TX = 1001,
+    USB_RX = 1002
 };
 
 enum BaudRate {
@@ -68,8 +71,8 @@ namespace serial {
     //% help=serial/read-until
     //% blockId=serial_read_until block="serial|read until %delimiter=serial_delimiter_conv"
     //% weight=19
-    StringData* readUntil(StringData* delimiter) {
-      return uBit.serial.readUntil(ManagedString(delimiter)).leakData();
+    String readUntil(String delimiter) {
+      return PSTR(uBit.serial.readUntil(MSTR(delimiter)));
     }
 
     /**
@@ -78,10 +81,10 @@ namespace serial {
     //% help=serial/read-string
     //% blockId=serial_read_buffer block="serial|read string"
     //% weight=18
-    StringData* readString() {
+    String readString() {
       int n = uBit.serial.getRxBufferSize();
-      if (n == 0) return ManagedString("").leakData();
-      return ManagedString(uBit.serial.read(n, MicroBitSerialMode::ASYNC)).leakData();
+      if (n == 0) return mkString("", 0);
+      return PSTR(uBit.serial.read(n, MicroBitSerialMode::ASYNC));
     }
 
     /**
@@ -90,8 +93,8 @@ namespace serial {
     */
     //% help=serial/on-data-received
     //% weight=18 blockId=serial_on_data_received block="serial|on data received %delimiters=serial_delimiter_conv"
-    void onDataReceived(StringData* delimiters, Action body) {
-      uBit.serial.eventOn(ManagedString(delimiters));
+    void onDataReceived(String delimiters, Action body) {
+      uBit.serial.eventOn(MSTR(delimiters));
       registerWithDal(MICROBIT_ID_SERIAL, MICROBIT_SERIAL_EVT_DELIM_MATCH, body);
       // lazy initialization of serial buffers
       uBit.serial.read(MicroBitSerialMode::ASYNC);
@@ -103,22 +106,22 @@ namespace serial {
     //% help=serial/write-string
     //% weight=87 blockGap=8
     //% blockId=serial_writestring block="serial|write string %text"
-    void writeString(StringData *text) {
+    //% text.shadowOptions.toString=true
+    void writeString(String text) {
       if (!text) return;
 
-      uBit.serial.send(ManagedString(text));
+      uBit.serial.send(MSTR(text));
     }
 
     /**
     * Send a buffer through serial connection
     */
-    //% blockId=serial_writebuffer block="serial|write buffer %buffer"
+    //% blockId=serial_writebuffer block="serial|write buffer %buffer=serial_readbuffer"
     //% help=serial/write-buffer advanced=true weight=6
     void writeBuffer(Buffer buffer) {
       if (!buffer) return;
 
-      ManagedBuffer buf(buffer);
-      uBit.serial.send(buf.getBytes(), buf.length());
+      uBit.serial.send(buffer->data, buffer->length);
     }
 
     /**
@@ -130,13 +133,30 @@ namespace serial {
     Buffer readBuffer(int length) {
       if (length <= 0)
         length = MICROBIT_SERIAL_READ_BUFFER_LENGTH;
-        
-      ManagedBuffer buf(length);
-      int read = uBit.serial.read(buf.getBytes(), buf.length());
-      if (read != buf.length())
-        buf = buf.slice(read);
 
-      return buf.leakData();
+      auto buf = mkBuffer(NULL, length);
+      int read = uBit.serial.read(buf->data, buf->length);
+      if (read != length) {
+        auto prev = buf;
+        buf = mkBuffer(buf->data, read);
+        decrRC(prev);
+      }
+
+      return buf;
+    }
+
+    bool tryResolvePin(SerialPin p, PinName& name) {
+      switch(p) {
+        case SerialPin::USB_TX: name = USBTX; return true;
+        case SerialPin::USB_RX: name = USBRX; return true;
+        default: 
+          auto pin = getPin(p); 
+          if (NULL != pin) {
+            name = pin->name;
+            return true;
+          }
+      }
+      return false;
     }
 
     /**
@@ -155,10 +175,10 @@ namespace serial {
     //% rx.fieldOptions.tooltips="false"
     //% blockGap=8
     void redirect(SerialPin tx, SerialPin rx, BaudRate rate) {
-      MicroBitPin* txp = getPin(tx); if (!txp) return;
-      MicroBitPin* rxp = getPin(rx); if (!rxp) return;
-
-      uBit.serial.redirect(txp->name, rxp->name);
+      PinName txn;
+      PinName rxn;
+      if (tryResolvePin(tx, txn) && tryResolvePin(rx, rxn))
+        uBit.serial.redirect(txn, rxn);
       uBit.serial.baud((int)rate);
     }
 
@@ -166,7 +186,7 @@ namespace serial {
     * Direct the serial input and output to use the USB connection.
     */
     //% weight=9 help=serial/redirect-to-usb
-    //% blockId=serial_redirect_to_usb block="serial|redirect to USB"    
+    //% blockId=serial_redirect_to_usb block="serial|redirect to USB"
     void redirectToUSB() {
       uBit.serial.redirect(USBTX, USBRX);
       uBit.serial.baud(115200);

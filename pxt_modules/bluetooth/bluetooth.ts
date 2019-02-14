@@ -1,8 +1,18 @@
+/// <reference no-default-lib="true"/>
 /**
  * Support for additional Bluetooth services.
  */
-//% color=#0082FB weight=96 icon="\uf294"
+//% color=#007EF4 weight=96 icon="\uf294"
 namespace bluetooth {
+    /**
+     * Internal use
+     */
+    //% shim=bluetooth::__log
+    export function __log(msg: string) {
+        return;
+    }
+    console.addListener(function (msg) { __log(msg) });
+
     /**
     *  Writes to the Bluetooth UART service buffer. From there the data is transmitted over Bluetooth to a connected device.
     */
@@ -12,6 +22,16 @@ namespace bluetooth {
     export function uartWriteString(data: string): void {
         // dummy implementation for simulator
         console.log("UART Write: " + data)
+    }
+
+    /**
+    *  Writes to the Bluetooth UART service buffer. From there the data is transmitted over Bluetooth to a connected device.
+    */
+    //% help=bluetooth/uart-write-line weight=79
+    //% blockId=bluetooth_uart_line block="bluetooth uart|write line %data" blockGap=8
+    //% parts="bluetooth" advanced=true
+    export function uartWriteLine(data: string): void {
+        uartWriteString(data + "\r\n");
     }
 
     /**

@@ -127,7 +127,7 @@ enum BeatFraction {
 }
 
 enum MelodyOptions {
-    //% block="once""
+    //% block="once"
     Once = 1,
     //% block="forever"
     Forever = 2,
@@ -135,6 +135,15 @@ enum MelodyOptions {
     OnceInBackground = 4,
     //% block="forever in background"
     ForeverInBackground = 8
+}
+
+enum MelodyStopOptions {
+    //% block="all"
+    All = MelodyOptions.Once | MelodyOptions.OnceInBackground,
+    //% block="foreground"
+    Foreground = MelodyOptions.Once,
+    //% block="background"
+    Background = MelodyOptions.OnceInBackground
 }
 
 enum MusicEvent {
@@ -163,7 +172,7 @@ enum MusicEvent {
 /**
  * Generation of music tones.
  */
-//% color=#D83B01 weight=98 icon="\uf025"
+//% color=#E63022 weight=106 icon="\uf025"
 namespace music {
     let beatsPerMinute: number = 120;
     let freqTable: number[] = [];
@@ -172,7 +181,7 @@ namespace music {
 
     /**
      * Plays a tone through pin ``P0`` for the given duration.
-     * @param frequency pitch of the tone to play in Hertz (Hz)
+     * @param frequency pitch of the tone to play in Hertz (Hz), eg: Note.C
      * @param ms tone duration in milliseconds (ms)
      */
     //% help=music/play-tone weight=90
@@ -186,7 +195,7 @@ namespace music {
 
     /**
      * Plays a tone through pin ``P0``.
-     * @param frequency pitch of the tone to play in Hertz (Hz)
+     * @param frequency pitch of the tone to play in Hertz (Hz), eg: Note.C
      */
     //% help=music/ring-tone weight=80
     //% blockId=device_ring block="ring tone (Hz)|%note=device_note" blockGap=8
@@ -210,12 +219,13 @@ namespace music {
 
     /**
      * Gets the frequency of a note.
-     * @param name the note name, eg: Note.C
+     * @param name the note name
      */
     //% weight=50 help=music/note-frequency
-    //% blockId=device_note block="%note"
-    //% shim=TD_ID
-    //% note.fieldEditor="note" note.defl="262"
+    //% blockId=device_note block="%name"
+    //% shim=TD_ID color="#FFFFFF" colorSecondary="#FFFFFF"
+    //% name.fieldEditor="note" name.defl="262"
+    //% name.fieldOptions.decompileLiterals=true
     //% useEnumVal=1
     export function noteFrequency(name: Note): number {
         return name;
@@ -299,18 +309,18 @@ namespace music {
      * Registers code to run on various melody events
      */
     //% blockId=melody_on_event block="music on %value"
-    //% help=music/on-event weight=59
-    export function onEvent(value: MusicEvent, handler: Action) {
+    //% help=music/on-event weight=59 blockGap=32
+    export function onEvent(value: MusicEvent, handler: () => void) {
         control.onEvent(MICROBIT_MELODY_ID, value, handler);
     }
 
     /**
      * Starts playing a melody.
      * Notes are expressed as a string of characters with this format: NOTE[octave][:duration]
-     * @param melodyArray the melody array to play, eg: ['g5:1']
+     * @param melodyArray the melody array to play
      * @param options melody options, once / forever, in the foreground / background
      */
-    //% help=music/begin-melody weight=60 blockGap=8
+    //% help=music/begin-melody weight=60 blockGap=16
     //% blockId=device_start_melody block="start melody %melody=device_builtin_melody| repeating %options"
     //% parts="headphone"
     export function beginMelody(melodyArray: string[], options: MelodyOptions = 1) {
@@ -346,6 +356,20 @@ namespace music {
                 currentMelody = null;
             })
         }
+    }
+
+    /**
+     * Stops the melodies
+     * @param options which melody to stop
+     */
+    //% help=music/stop-melody weight=59 blockGap=16
+    //% blockId=device_stop_melody block="stop melody $options"
+    //% parts="headphone"
+    export function stopMelody(options: MelodyStopOptions) {
+        if (options & MelodyStopOptions.Foreground)
+            beginMelody([], MelodyOptions.Once);
+        if (options & MelodyStopOptions.Background)
+            beginMelody([], MelodyOptions.OnceInBackground);
     }
 
     /**

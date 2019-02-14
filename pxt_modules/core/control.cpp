@@ -220,7 +220,7 @@ namespace control {
     //% help=control/in-background blockAllowMultiple=1 afterOnStart=true
     //% blockId="control_in_background" block="run in background" blockGap=8
     void inBackground(Action a) {
-      runInBackground(a);
+      runInParallel(a);
     }
 
     /**
@@ -290,8 +290,8 @@ namespace control {
      */
     //% blockId="control_device_name" block="device name" weight=10 blockGap=8
     //% advanced=true
-    StringData* deviceName() {
-        return ManagedString(microbit_friendly_name()).leakData();
+    String deviceName() {
+        return mkString(microbit_friendly_name(), -1);
     }
 
     /**
@@ -301,5 +301,23 @@ namespace control {
     //% advanced=true
     int deviceSerialNumber() {
         return microbit_serial_number();
+    }
+
+    /**
+    * Informs simulator/runtime of a MIDI message
+    * Internal function to support the simulator.
+    */
+    //% part=midioutput blockHidden=1
+    void __midiSend(Buffer buffer) {
+        // this is a stub to support the simulator
+    }
+
+    /**
+    *
+    */
+    //%
+    void __log(String text) {
+        if (NULL == text) return;
+        pxt::sendSerial(text->data, text->length);
     }
 }
