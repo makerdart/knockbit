@@ -6,10 +6,12 @@ namespace knockbit {
     let BluetoothConnected: boolean = false; // 蓝牙已连接
 
     // 连接蓝牙后进行初始化
-    function setupApp() {
+    ////% blockId=knock_setupApp
+    ////% block="手动初始化（set）"
+    //export function setupApp() {
         //sendSuperMessage("mod" + "microbit");// 设置库类型
-        ledOnBoard("llp");  // 板载led 5*5状态
-    }
+        //ledOnBoard("llp");  // 板载led 5*5状态
+    //}
 
     let CMD_HANDLERS: LinkedKeyHandlerList = null;  // 自定义命令处理器
 
@@ -108,8 +110,9 @@ namespace knockbit {
             case "tem": // 温度计
                 sendSuperMessage(cmd + input.temperature());
                 break;
-            case "set": // 初始化小程序
-                setupApp();
+            // 2019-2-15 小程序端设置默认图形，不再初始化led25的状态，留给扩展包用
+            //case "set": // 初始化小程序
+            //    setupApp();
             default:    // 未知的消息
                 break;
         }
@@ -293,7 +296,7 @@ namespace knockbit {
         })
         bluetooth.onBluetoothDisconnected(() => {
             BluetoothConnected = false
-            // basic.showIcon(IconNames.SmallDiamond)
+            basic.showIcon(IconNames.SmallDiamond)
             // if (strip != null) {    // 断开蓝牙时关闭led灯
             //     for (let i = 0; i < pixelPort; i++)
             //         strip.setPixelColor(i, 0);
