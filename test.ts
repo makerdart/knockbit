@@ -15,5 +15,5 @@ knockbit.onCmdReceived("alm", function ({ cmd, args }) {
 knockbit.onCmdReceived("mp3", function ({ cmd, args }) {
 	
 })
-// autohandle message, user 4 pixel led
+// autohandle message
 knockbit.init(true)

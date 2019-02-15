@@ -3,7 +3,7 @@ namespace knockbit {
 
     let terminator = "\n";  // 传输终结符
 
-   let BluetoothConnected: boolean = false; // 蓝牙已连接
+    let BluetoothConnected: boolean = false; // 蓝牙已连接
 
     // 连接蓝牙后进行初始化
     function setupApp() {
@@ -32,9 +32,13 @@ namespace knockbit {
 
     let messageContainer = new Message;
 
- //% blockId=knock_setMode
+    /**
+    * setMode 
+    * @param mode The mode; eg: "microbit"
+    */
+    //% blockId=knock_setMode
     //% block="设置模式 |模式 %mode"
-    export function setMode(mode:string){
+    export function setMode(mode: string) {
         sendSuperMessage("mod" + mode);
     }
 
@@ -56,8 +60,8 @@ namespace knockbit {
         CMD_HANDLERS = newHandler;
     }
 
- 
-   let onBluetoothConnectedHandler: VoidHandle = null;
+
+    let onBluetoothConnectedHandler: VoidHandle = null;
     //% blockId=knock_onBluetoothConnected
     //% block="当蓝牙连接成功时"
     export function onBluetoothConnected(callback: () => void) {
