@@ -1,6 +1,6 @@
 {
     "name": "KnockBit",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Control micro:bit by wechat app. The Tiny version.",
     "license": "MIT",
     "dependencies": {
