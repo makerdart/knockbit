@@ -5,14 +5,6 @@ namespace knockbit {
 
     let BluetoothConnected: boolean = false; // 蓝牙已连接
 
-    // 连接蓝牙后进行初始化
-    ////% blockId=knock_setupApp
-    ////% block="手动初始化（set）"
-    //export function setupApp() {
-        //sendSuperMessage("mod" + "microbit");// 设置库类型
-        //ledOnBoard("llp");  // 板载led 5*5状态
-    //}
-
     let CMD_HANDLERS: LinkedKeyHandlerList = null;  // 自定义命令处理器
 
     class LinkedKeyHandlerList {
@@ -26,14 +18,6 @@ namespace knockbit {
         callback: () => void;
     }
 
-    // class LinkedIdHandlerList {
-    //     id: number;
-    //     callback: () => void;
-    //     next: LinkedIdHandlerList
-    // }
-
-    //let messageContainer = new Message;
-
     /**
     * setMode 
     * @param mode The mode; eg: "microbit"
@@ -44,25 +28,7 @@ namespace knockbit {
         sendSuperMessage("mod" + mode);
     }
 
-    // /**
-    //  * onCmdReceived 
-    //  * @param cmd The cmd; eg: "---"
-    //  * @param callback 
-    //  */
-    // //% mutate=objectdestructuring
-    // //% mutateText="message"
-    // //% mutateDefaults="cmd,args"
-    // //% blockId=knock_onCmdReceived
-    // //% block="当收到蓝牙数据时 |命令 %cmd"
-    // export function onCmdReceived(cmd: string, callback: (message: Message) => void) {
-    //     let newHandler = new LinkedKeyHandlerList()
-    //     newHandler.callback = callback;
-    //     newHandler.key = cmd;
-    //     newHandler.next = CMD_HANDLERS;
-    //     CMD_HANDLERS = newHandler;
-    // }
-
-     /**
+    /**
      * onCmdReceived 
      * @param key The key; eg: "---"
      */
@@ -79,6 +45,7 @@ namespace knockbit {
 
 
     let onBluetoothConnectedHandler: VoidHandle = null;
+
     //% blockId=knock_onBluetoothConnected
     //% block="当蓝牙连接成功时"
     export function onBluetoothConnected(callback: () => void) {
