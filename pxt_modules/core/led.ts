@@ -2,7 +2,20 @@
  * Control of the LED screen.
  */
 //% color=#5C2D91 weight=101 icon="\uf205"
-    namespace led {
+namespace led {
+    /**
+     * Get the on/off state of the specified LED using x, y coordinates. (0,0) is upper left.
+     * @param x the horizontal coordinate of the LED
+     * @param y the vertical coordinate of the LED
+     */
+    //% help=led/point weight=76
+    //% blockId=device_point block="point|x %x|y %y"
+    //% parts="ledmatrix"
+    //% x.min=0 x.max=4 y.min=0 y.max=4
+    //% x.fieldOptions.precision=1 y.fieldOptions.precision=1
+    export function point(x: number, y: number): boolean {
+        return led.pointBrightness(x, y) > 0;
+    }
 
     // what's the current high value
     let barGraphHigh = 0;
@@ -55,8 +68,8 @@
 
     /**
      * Toggles a particular pixel
-     * @param x TODO
-     * @param y TODO
+     * @param x pixel column
+     * @param y pixel row
      */
     //% help=led/toggle weight=77
     //% blockId=device_led_toggle block="toggle|x %x|y %y" icon="\uf204" blockGap=8
@@ -99,7 +112,7 @@
 
     /**
      * Fades in the screen display.
-     * @param ms TODO
+     * @param ms fade time in milleseconds
      */
     //% help=led/fade-in
     //% parts="ledmatrix"
@@ -122,7 +135,7 @@
 
     /**
      * Fades out the screen brightness.
-     * @param ms TODO
+     * @param ms fade time in milliseconds
      */
     //% help=led/fade-out
     //% parts="ledmatrix"
@@ -142,6 +155,4 @@
         }
         led.setBrightness(0);
     }
-
-
 }

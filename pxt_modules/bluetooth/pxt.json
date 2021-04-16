@@ -1,6 +1,9 @@
 {
     "name": "bluetooth",
     "description": "Bluetooth services",
+    "dependencies": {
+        "core": "*"
+    },
     "files": [
         "README.md",
         "enums.d.ts",
@@ -10,11 +13,12 @@
         "BLEHF2Service.h",
         "BLEHF2Service.cpp"
     ],
-    "icon": "./static/packages/bluetooth/icon.png",
     "public": true,
-    "dependencies": {
-        "core": "*"
+    "targetVersions": {
+        "target": "3.1.75",
+        "pxt": "6.13.18"
     },
+    "icon": "./static/packages/bluetooth/icon.png",
     "yotta": {
         "config": {
             "microbit-dal": {
@@ -28,10 +32,18 @@
                 "stack_size": 1280,
                 "gatt_table_size": "0x700"
             }
-        }
-    },
-    "targetVersions": {
-        "target": "1.2.18"
-    },
-    "installedVersion": "embed:bluetooth"
+        },
+        "userConfigs": [
+            {
+                "description": "Disable Bluetooth Event Service",
+                "config": {
+                    "microbit-dal": {
+                        "bluetooth": {
+                            "event_service": 0
+                        }
+                    }
+                }
+            }
+        ]
+    }
 }

@@ -2,6 +2,8 @@
 
 enum class DisplayMode_ {
     //% block="black and white"
+    BlackAndWhite = DISPLAY_MODE_BLACK_AND_WHITE,
+    //% blockHidden=true
     BackAndWhite = DISPLAY_MODE_BLACK_AND_WHITE,
     //% block="greyscale"
     Greyscale = DISPLAY_MODE_GREYSCALE,
@@ -47,8 +49,8 @@ namespace led {
 
     /**
      * Turn off the specified LED using x, y coordinates (x is horizontal, y is vertical). (0,0) is upper left.
-     * @param x TODO
-     * @param y TODO
+     * @param x the horizontal coordinate of the LED
+     * @param y the vertical coordinate of the LED
      */
     //% help=led/unplot weight=77
     //% blockId=device_unplot block="unplot|x %x|y %y" blockGap=8
@@ -60,18 +62,18 @@ namespace led {
     }
 
     /**
-     * Get the on/off state of the specified LED using x, y coordinates. (0,0) is upper left.
-     * @param x TODO
-     * @param y TODO
+     * Get the brightness state of the specified LED using x, y coordinates. (0,0) is upper left.
+     * @param x the horizontal coordinate of the LED
+     * @param y the vertical coordinate of the LED
      */
-    //% help=led/point weight=76
-    //% blockId=device_point block="point|x %x|y %y"
+    //% help=led/point-brightness weight=76
+    //% blockId=device_point_brightness block="point|x %x|y %y brightness"
     //% parts="ledmatrix"
     //% x.min=0 x.max=4 y.min=0 y.max=4
     //% x.fieldOptions.precision=1 y.fieldOptions.precision=1
-    bool point(int x, int y) {
-      int pix = uBit.display.image.getPixelValue(x, y);
-      return pix > 0;
+    //% advanced=true
+    int pointBrightness(int x, int y) {
+      return uBit.display.image.getPixelValue(x, y);
     }
 
     /**
@@ -145,7 +147,7 @@ namespace led {
     //% parts="ledmatrix"
     Image screenshot() {
         auto d = uBit.display.screenShot().leakData();
-        auto r = new RefMImage(d);
+        auto r = NEW_GC(RefMImage, d);
         d->decr();
         return r;
         /*

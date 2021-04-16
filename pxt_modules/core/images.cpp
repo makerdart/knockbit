@@ -1,7 +1,6 @@
 #include "pxt.h"
 
-PXT_VTABLE_BEGIN(RefMImage, 0, 0)
-PXT_VTABLE_END
+PXT_VTABLE(RefMImage, ValType::Object)
 
 RefMImage::RefMImage(ImageData *d) : PXT_VTABLE_INIT(RefMImage), img(d) {
     img->incr();
@@ -12,7 +11,7 @@ void RefMImage::destroy(RefMImage *t) {
 }
 
 void RefMImage::print(RefMImage *t) {
-    DMESG("RefMImage %p r=%d size=%d x %d", t, t->refcnt, img->width, img->height);
+    DMESG("RefMImage %p size=%d x %d", t, t->img->width, t->img->height);
 }
 
 void RefMImage::makeWritable() {
@@ -20,6 +19,12 @@ void RefMImage::makeWritable() {
         MicroBitImage i(img);
         img = i.clone().leakData();
     }
+}
+
+void RefMImage::scan(RefMImage *t) {}
+
+unsigned RefMImage::gcsize(RefMImage *t) {
+    return (sizeof(*t) + 3) >> 2;
 }
 
 /**
@@ -35,7 +40,7 @@ namespace images {
 //% blockId=device_build_image block="create image"
 //% parts="ledmatrix"
 Image createImage(ImageLiteral_ leds) {
-    return new RefMImage(imageBytes(leds));
+    return NEW_GC(RefMImage, imageBytes(leds));
 }
 
 /**
@@ -47,6 +52,22 @@ Image createImage(ImageLiteral_ leds) {
 Image createBigImage(ImageLiteral_ leds) {
     return createImage(leds);
 }
+
+//%
+Buffer charCodeBuffer(int charCode) {
+    if(charCode < MICROBIT_FONT_ASCII_START || charCode > MICROBIT_FONT_ASCII_END)
+        return NULL;
+#if MICROBIT_CODAL
+    auto font = codal::BitmapFont::getSystemFont();
+#else
+    auto font = MicroBitFont::getSystemFont();
+#endif
+    const int offset = (charCode - MICROBIT_FONT_ASCII_START) * 5;;
+    const uint8_t* charBuffer = font.characters + offset;
+    
+    return PXT_CREATE_BUFFER(charBuffer, 5);
+}
+
 } // namespace images
 
 namespace ImageMethods {
@@ -62,10 +83,12 @@ void plotImage(Image i, int xOffset = 0) {
 /**
  * Shows an frame from the image at offset ``x offset``.
  * @param xOffset column index to start displaying the image
+ * @param interval time in milliseconds to pause after drawing
  */
 //% help=images/show-image weight=80 blockNamespace=images
-//% blockId=device_show_image_offset block="show image %sprite(myImage)|at offset %offset" blockGap=8
-//% parts="ledmatrix" async
+//% blockId=device_show_image_offset block="show image %sprite(myImage)|at offset %offset ||and interval (ms) %interval"
+//% interval.defl=400
+//% blockGap=8 parts="ledmatrix" async
 void showImage(Image sprite, int xOffset, int interval = 400) {
     uBit.display.print(MicroBitImage(sprite->img), -xOffset, 0, 0, interval);
 }
@@ -78,7 +101,7 @@ void showImage(Image sprite, int xOffset, int interval = 400) {
 //% parts="ledmatrix"
 void plotFrame(Image i, int xOffset) {
     // TODO showImage() used in original implementation
-    plotImage(i, xOffset * 5);
+    plotImage(i, xOffset * i->img->height);
 }
 
 /**
@@ -145,9 +168,9 @@ int height(Image i) {
 
 /**
  * Set a pixel state at position ``(x,y)``
- * @param x TODO
- * @param y TODO
- * @param value TODO
+ * @param x pixel column
+ * @param y pixel row
+ * @param value pixel state
  */
 //% help=images/set-pixel
 //% parts="ledmatrix"
@@ -157,8 +180,8 @@ void setPixel(Image i, int x, int y, bool value) {
 
 /**
  * Get the pixel state at position ``(x,y)``
- * @param x TODO
- * @param y TODO
+ * @param x pixel column
+ * @param y pixel row
  */
 //% help=images/pixel
 //% parts="ledmatrix"
@@ -167,12 +190,12 @@ bool pixel(Image i, int x, int y) {
 }
 
 /**
- * Shows a particular frame of the image strip.
- * @param frame TODO
+ * Show a particular frame of the image strip.
+ * @param frame image frame to show
  */
 //% weight=70 help=images/show-frame
 //% parts="ledmatrix"
 void showFrame(Image i, int frame, int interval = 400) {
-    showImage(i, frame * 5, interval);
+    showImage(i, frame * i->img->height, interval);
 }
 } // namespace ImageMethods

@@ -1,5 +1,7 @@
 #include "pxt.h"
 
+extern uint32_t __StackTop;
+
 /**
  * How to create the event.
  */
@@ -205,6 +207,15 @@ enum EventBusValue {
     MES_REMOTE_CONTROL_EVT_VOLUMEUP_ = MES_REMOTE_CONTROL_EVT_VOLUMEUP,
 };
 
+enum EventFlags {
+    //%
+    QueueIfBusy = MESSAGE_BUS_LISTENER_QUEUE_IF_BUSY,
+    //%
+    DropIfBusy = MESSAGE_BUS_LISTENER_DROP_IF_BUSY,
+    //%
+    Reentrant = MESSAGE_BUS_LISTENER_REENTRANT
+};
+
 //% weight=1 color="#333333"
 //% advanced=true
 namespace control {
@@ -215,12 +226,38 @@ namespace control {
     }
 
     /**
+    * Gets the number of milliseconds elapsed since power on.
+    */
+    //% help=control/millis weight=50
+    //% blockId=control_running_time block="millis (ms)"
+    int millis() {
+        return system_timer_current_time();
+    }
+
+    /**
+    * Gets current time in microseconds. Overflows every ~18 minutes.
+    */
+    //%
+    int micros() {
+        return system_timer_current_time_us() & 0x3fffffff;
+    }
+
+    /**
      * Schedules code that run in the background.
      */
     //% help=control/in-background blockAllowMultiple=1 afterOnStart=true
     //% blockId="control_in_background" block="run in background" blockGap=8
     void inBackground(Action a) {
       runInParallel(a);
+    }
+
+    /**
+    * Blocks the calling thread until the specified event is raised.
+    */
+    //% help=control/wait-for-event async
+    //% blockId=control_wait_for_event block="wait for event|from %src|with value %value"
+    void waitForEvent(int src, int value) {
+        pxt::waitForEvent(src, value);
     }
 
     /**
@@ -239,7 +276,7 @@ namespace control {
     //% help=control/wait-micros weight=29
     //% blockId="control_wait_us" block="wait (µs)%micros"
     void waitMicros(int micros) {
-        wait_us(micros);
+        sleep_us(micros);
     }
 
     /**
@@ -261,8 +298,9 @@ namespace control {
     //% weight=20 blockGap=8 blockId="control_on_event" block="on event|from %src=control_event_source_id|with value %value=control_event_value_id"
     //% help=control/on-event
     //% blockExternalInputs=1
-    void onEvent(int src, int value, Action handler) {
-        registerWithDal(src, value, handler);
+    void onEvent(int src, int value, Action handler, int flags = 0) {
+        if (!flags) flags = ::EventFlags::QueueIfBusy;
+        registerWithDal(src, value, handler, (int)flags);
     }
 
     /**
@@ -289,6 +327,7 @@ namespace control {
      * Make a friendly name for the device based on its serial number
      */
     //% blockId="control_device_name" block="device name" weight=10 blockGap=8
+    //% help=control/device-name
     //% advanced=true
     String deviceName() {
         return mkString(microbit_friendly_name(), -1);
@@ -298,9 +337,19 @@ namespace control {
     * Derive a unique, consistent serial number of this device from internal data.
     */
     //% blockId="control_device_serial_number" block="device serial number" weight=9
+    //% help=control/device-serial-number
     //% advanced=true
     int deviceSerialNumber() {
         return microbit_serial_number();
+    }
+
+   /**
+    * Derive a unique, consistent 64-bit serial number of this device from internal data.
+    */
+    //% help=control/device-long-serial-number
+    //% advanced=true
+    Buffer deviceLongSerialNumber() {
+        return mkBuffer((uint8_t*)&NRF_FICR->DEVICEID[0], sizeof(uint64_t));
     }
 
     /**
@@ -316,8 +365,44 @@ namespace control {
     *
     */
     //%
-    void __log(String text) {
+    void __log(int priority, String text) {
         if (NULL == text) return;
-        pxt::sendSerial(text->data, text->length);
+        pxt::sendSerial(text->getUTF8Data(), text->getUTF8Size());
     }
+
+
+
+/**
+* Allocates the next user notification event
+*/
+//% help=control/allocate-notify-event
+int allocateNotifyEvent() {
+#if MICROBIT_CODAL
+    return ::allocateNotifyEvent();
+#else
+    static int notifyEv = 1024;
+    return ++notifyEv;
+#endif
+}
+
+/** Write a message to DMESG debugging buffer. */
+//%
+void dmesg(String s) {
+    // this is no-op on v1
+    DMESG("# %s", s->getUTF8Data());
+}
+
+/** Write a message and value (pointer) to DMESG debugging buffer. */
+//%
+void dmesgPtr(String str, Object_ ptr) {
+    // this is no-op on v1
+    DMESG("# %s: %p", str->getUTF8Data(), ptr);
+}
+
+//%
+uint32_t _ramSize()
+{
+    return (uint32_t)&__StackTop & 0x1fffffff;
+}
+
 }

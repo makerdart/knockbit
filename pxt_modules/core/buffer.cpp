@@ -23,6 +23,30 @@ void setByte(Buffer buf, int off, int v) {
         buf->data[off] = v;
 }
 
+/**
+* Reads an unsigned byte at a particular location
+*/
+//%
+int getUint8(Buffer buf, int off) {
+    return getByte(buf, off);
+}
+
+/**
+ * Returns false when the buffer can be written to.
+ */
+//%
+bool isReadOnly(Buffer buf) {
+    return buf->isReadOnly();
+}
+
+/**
+* Writes an unsigned byte at a particular location
+*/
+//%
+void setUint8(Buffer buf, int off, int v) {
+    setByte(buf, off, v);
+}
+
 int writeBuffer(Buffer buf, int dstOffset, Buffer src, int srcOffset = 0, int length = -1) {
     if (length < 0)
         length = src->length;
@@ -127,15 +151,23 @@ void shift(Buffer buf, int offset, int start = 0, int length = -1) {
 }
 
 /**
+ * Convert a buffer to string assuming UTF8 encoding
+ */
+//%
+String toString(Buffer buf) {
+    return mkString((char *)buf->data, buf->length);
+}
+
+/**
  * Convert a buffer to its hexadecimal representation.
  */
 //%
 String toHex(Buffer buf) {
     const char *hex = "0123456789abcdef";
-    auto res = mkString(NULL, buf->length * 2);
+    auto res = mkStringCore(NULL, buf->length * 2);
     for (int i = 0; i < buf->length; ++i) {
-        res->data[i << 1] = hex[buf->data[i] >> 4];
-        res->data[(i << 1) + 1] = hex[buf->data[i] & 0xf];
+        res->ascii.data[i << 1] = hex[buf->data[i] >> 4];
+        res->ascii.data[(i << 1) + 1] = hex[buf->data[i] & 0xf];
     }
     return res;
 }
@@ -188,18 +220,52 @@ void write(Buffer buf, int dstOffset, Buffer src) {
     // srcOff and length not supported, we only do up to 4 args :/
     writeBuffer(buf, dstOffset, src, 0, -1);
 }
+
+/**
+ * Compute k-bit FNV-1 non-cryptographic hash of the buffer.
+ */
+//%
+uint32_t hash(Buffer buf, int bits) {
+    if (bits < 1)
+        return 0;
+    uint32_t h = hash_fnv1(buf->data, buf->length);
+    if (bits >= 32)
+        return h;
+    else
+        return ((h ^ (h >> bits)) & ((1 << bits) - 1));
 }
 
+} // namespace BufferMethods
+
+// The functions below are deprecated in control namespace, but they are referenced
+// in Buffer namespaces via explicit shim=...
 namespace control {
 /**
  * Create a new zero-initialized buffer.
  * @param size number of bytes in the buffer
  */
-//%
+//% deprecated=1
 Buffer createBuffer(int size) {
     return mkBuffer(NULL, size);
 }
+
+
+/**
+ * Create a new buffer with UTF8-encoded string
+ * @param str the string to put in the buffer
+ */
+//% deprecated=1
+Buffer createBufferFromUTF8(String str) {
+#if PXT_UTF8
+    auto sz = toRealUTF8(str, NULL);
+    auto r = mkBuffer(NULL, sz);
+    toRealUTF8(str, r->data);
+    return r;
+#else
+    return mkBuffer((const uint8_t *)str->getUTF8Data(), str->getUTF8Size());
+#endif
 }
+} // namespace control
 
 namespace pxt {
 static int writeBytes(uint8_t *dst, uint8_t *src, int length, bool swapBytes, int szLeft) {
@@ -212,9 +278,9 @@ static int writeBytes(uint8_t *dst, uint8_t *src, int length, bool swapBytes, in
         for (int i = 0; i < length; ++i)
             *--p = src[i];
     } else {
-        if (length == 4 && ((uint32_t)dst & 3) == 0)
+        if (length == 4 && ((uintptr_t)dst & 3) == 0)
             *(uint32_t *)dst = *(uint32_t *)src;
-        else if (length == 2 && ((uint32_t)dst & 1) == 0)
+        else if (length == 2 && ((uintptr_t)dst & 1) == 0)
             *(uint16_t *)dst = *(uint16_t *)src;
         else
             memcpy(dst, src, length);
@@ -234,9 +300,9 @@ static int readBytes(uint8_t *src, uint8_t *dst, int length, bool swapBytes, int
         for (int i = 0; i < length; ++i)
             dst[i] = *--p;
     } else {
-        if (length == 4 && ((uint32_t)src & 3) == 0)
+        if (length == 4 && ((uintptr_t)src & 3) == 0)
             *(uint32_t *)dst = *(uint32_t *)src;
-        else if (length == 2 && ((uint32_t)src & 1) == 0)
+        else if (length == 2 && ((uintptr_t)src & 1) == 0)
             *(uint16_t *)dst = *(uint16_t *)src;
         else
             memcpy(dst, src, length);
@@ -353,4 +419,4 @@ TNumber getNumberCore(uint8_t *buf, int szLeft, NumberFormat format) {
 
     return 0;
 }
-}
+} // namespace pxt

@@ -4,14 +4,16 @@
  */
 //% color=#007EF4 weight=96 icon="\uf294"
 namespace bluetooth {
+    export let NEW_LINE = "\r\n";
+
     /**
      * Internal use
      */
     //% shim=bluetooth::__log
-    export function __log(msg: string) {
+    export function __log(priority: number, msg: string) {
         return;
     }
-    console.addListener(function (msg) { __log(msg) });
+    console.addListener(function (_pri, msg) { __log(_pri, msg) });
 
     /**
     *  Writes to the Bluetooth UART service buffer. From there the data is transmitted over Bluetooth to a connected device.
@@ -20,8 +22,7 @@ namespace bluetooth {
     //% blockId=bluetooth_uart_write block="bluetooth uart|write string %data" blockGap=8
     //% parts="bluetooth" shim=bluetooth::uartWriteString advanced=true
     export function uartWriteString(data: string): void {
-        // dummy implementation for simulator
-        console.log("UART Write: " + data)
+        console.log(data)
     }
 
     /**
@@ -31,7 +32,7 @@ namespace bluetooth {
     //% blockId=bluetooth_uart_line block="bluetooth uart|write line %data" blockGap=8
     //% parts="bluetooth" advanced=true
     export function uartWriteLine(data: string): void {
-        uartWriteString(data + "\r\n");
+        uartWriteString(data + serial.NEW_LINE);
     }
 
     /**
@@ -53,7 +54,7 @@ namespace bluetooth {
     //% help=bluetooth/uart-write-value advanced=true
     //% blockId=bluetooth_uart_writevalue block="bluetooth uart|write value %name|= %value"
     export function uartWriteValue(name: string, value: number): void {
-        uartWriteString(name + ":" + value + "\r\n");
+        uartWriteString((name ? name + ":" : "") + value + NEW_LINE);
     }
 
     /**
@@ -64,7 +65,7 @@ namespace bluetooth {
     //% parts="bluetooth" shim=bluetooth::uartReadUntil advanced=true
     export function uartReadUntil(del: string): string {
         // dummy implementation for simulator
-        return "???"
+        return ""
     }
 
     /**
@@ -77,6 +78,7 @@ namespace bluetooth {
     //% blockId=eddystone_advertise_uid block="bluetooth advertise UID|namespace (bytes 6-9)%ns|instance (bytes 2-6)%instance|with power %power|connectable %connectable"
     //% parts=bluetooth weight=12 blockGap=8
     //% help=bluetooth/advertise-uid blockExternalInputs=1
+    //% hidden=1 deprecated=1
     export function advertiseUid(ns: number, instance: number, power: number, connectable: boolean) {
         const buf = pins.createBuffer(16);
         buf.setNumber(NumberFormat.Int32BE, 6, ns);

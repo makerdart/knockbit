@@ -1,9 +1,41 @@
+const enum Delimiters {
+    //% block="new line (\n)"
+    NewLine = 10,
+    //% block=","
+    Comma = 44,
+    //% block="$"
+    Dollar = 36,
+    //% block=":"
+    Colon = 58,
+    //% block="."
+    Fullstop = 46,
+    //% block="#"
+    Hash = 35,
+    //% block="carriage return (\r)"
+    CarriageReturn = 13,
+    //% block="space"
+    Space = 32,
+    //% block="tab (\t)"
+    Tab = 9,
+    //% block="|"
+    Pipe = 124,
+    //% block=";"
+    SemiColon = 59,
+}
+
 /**
  * Reading and writing data over a serial connection.
  */
 //% weight=2 color=#002050 icon="\uf287"
 //% advanced=true
 namespace serial {
+    /**
+     * The string used to mark a new line, default is \r\n
+     */
+    export let NEW_LINE = "\r\n";
+    export let NEW_LINE_DELIMITER: Delimiters = Delimiters.NewLine;
+    let writeLinePadding = 32;
+
     /**
      * Print a line of text to the serial port
      * @param value to send over serial
@@ -14,13 +46,29 @@ namespace serial {
     //% text.shadowOptions.toString=true
     export function writeLine(text: string): void {
         if (!text) text = "";
+        serial.writeString(text);
         // pad data to the 32 byte boundary
         // to ensure apps receive the packet
-        let r = (32 - (text.length + 2) % 32) % 32;
-        serial.writeString(text);
-        for (let i = 0; i < r; ++i)
-            serial.writeString(" ");
-        serial.writeString("\r\n");
+        if (writeLinePadding > 0) {
+            let r = (writeLinePadding - (text.length + NEW_LINE.length) % writeLinePadding) % writeLinePadding;
+            for (let i = 0; i < r; ++i)
+                serial.writeString(" ");
+        }
+        serial.writeString(NEW_LINE);
+    }
+
+    /**
+     * Sets the padding length for lines sent with "write line".
+     * @param length the number of bytes alignment, eg: 0
+     *
+     */
+    //% weight=1
+    //% help=serial/set-write-line-padding
+    //% blockId=serialWriteNewLinePadding block="serial set write line padding to $length"
+    //% advanced=true
+    //% length.min=0 length.max=128
+    export function setWriteLinePadding(length: number) {
+        writeLinePadding = length | 0;
     }
 
     /**
@@ -41,7 +89,7 @@ namespace serial {
     //% blockId=serial_writenumbers block="serial|write numbers %values"
     export function writeNumbers(values: number[]): void {
         if (!values) return;
-        for(let i = 0; i < values.length; ++i) {
+        for (let i = 0; i < values.length; ++i) {
             if (i > 0) writeString(",");
             writeNumber(values[i]);
         }
@@ -57,7 +105,7 @@ namespace serial {
     //% help=serial/write-value
     //% blockId=serial_writevalue block="serial|write value %name|= %value"
     export function writeValue(name: string, value: number): void {
-        writeLine(name + ":" + value);
+        writeLine((name ? name + ":" : "") + value);
     }
 
     /**
@@ -67,7 +115,7 @@ namespace serial {
     //% blockId=serial_read_line block="serial|read line"
     //% weight=20 blockGap=8
     export function readLine(): string {
-        return serial.readUntil(delimiters(Delimiters.NewLine));
+        return serial.readUntil(delimiters(NEW_LINE_DELIMITER));
     }
 
     /**
@@ -76,17 +124,6 @@ namespace serial {
     //% blockId="serial_delimiter_conv" block="%del"
     //% weight=1 blockHidden=true
     export function delimiters(del: Delimiters): string {
-        // even though it might not look like, this is more
-        // (memory) efficient than the C++ implementation, because the
-        // strings are statically allocated and take no RAM
-        switch (del) {
-            case Delimiters.NewLine: return "\n"
-            case Delimiters.Comma: return ","
-            case Delimiters.Dollar: return "$"
-            case Delimiters.Colon: return ":"
-            case Delimiters.Fullstop: return "."
-            case Delimiters.Hash: return "#"
-            default: return "\n"
-        }
+        return String.fromCharCode(del as number);
     }
 }
