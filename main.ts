@@ -18,7 +18,7 @@ namespace knockbit {
     class LinkedKeyHandlerList {
         key: string;
         // microbit中的callbak最多支持3个参数
-        callback: (container: Message) => void;
+        callback: (cmd:string, arg:string) => void;
         next: LinkedKeyHandlerList
     }
 
@@ -32,7 +32,7 @@ namespace knockbit {
     //     next: LinkedIdHandlerList
     // }
 
-    let messageContainer = new Message;
+    //let messageContainer = new Message;
 
     /**
     * setMode 
@@ -44,20 +44,35 @@ namespace knockbit {
         sendSuperMessage("mod" + mode);
     }
 
-    /**
+    // /**
+    //  * onCmdReceived 
+    //  * @param cmd The cmd; eg: "---"
+    //  * @param callback 
+    //  */
+    // //% mutate=objectdestructuring
+    // //% mutateText="message"
+    // //% mutateDefaults="cmd,args"
+    // //% blockId=knock_onCmdReceived
+    // //% block="当收到蓝牙数据时 |命令 %cmd"
+    // export function onCmdReceived(cmd: string, callback: (message: Message) => void) {
+    //     let newHandler = new LinkedKeyHandlerList()
+    //     newHandler.callback = callback;
+    //     newHandler.key = cmd;
+    //     newHandler.next = CMD_HANDLERS;
+    //     CMD_HANDLERS = newHandler;
+    // }
+
+     /**
      * onCmdReceived 
-     * @param cmd The cmd; eg: "---"
-     * @param callback 
+     * @param key The key; eg: "---"
      */
-    //% mutate=objectdestructuring
-    //% mutateText="message"
-    //% mutateDefaults="cmd,args"
     //% blockId=knock_onCmdReceived
-    //% block="当收到蓝牙数据时 |命令 %cmd"
-    export function onCmdReceived(cmd: string, callback: (message: Message) => void) {
+    //% block="当收到蓝牙数据时 $key 命令 $cmd $arg"
+    //% draggableParameters="reporter"
+    export function onCmdReceived(key: string, callback: (cmd: string, arg: string) => void) {
         let newHandler = new LinkedKeyHandlerList()
         newHandler.callback = callback;
-        newHandler.key = cmd;
+        newHandler.key = key;
         newHandler.next = CMD_HANDLERS;
         CMD_HANDLERS = newHandler;
     }
@@ -213,19 +228,19 @@ namespace knockbit {
 
         if (msg.length < 3) return;// 非法命令（以后再处理）
         let cmd = msg.substr(0, 3);
-        let args = msg.substr(3, msg.length - 3);
+        let arg = msg.substr(3, msg.length - 3);
 
         let handlerToExamine = CMD_HANDLERS;
 
-        messageContainer.cmd = cmd;
-        messageContainer.args = args;
+        // messageContainer.cmd = cmd;
+        // messageContainer.args = args;
 
         //analyzeCmd(cmd, arg);
         //messageContainer = arg;
         if (handlerToExamine == null) { //empty handler list
             //basic.showString("nohandler")
             if (auto) {   //handle message with auto handler
-                handleMessage(cmd, args);
+                handleMessage(cmd, arg);
             }
         }
         else {
@@ -233,13 +248,13 @@ namespace knockbit {
 
             while (handlerToExamine != null) {
                 if (handlerToExamine.key == cmd) {
-                    handlerToExamine.callback(messageContainer)
+                    handlerToExamine.callback(cmd, arg)
                     handled = true;
                 }
                 //2018-10-18新增
                 //系统保留回显命令，用于输出敲比特发送过来的完整命令
                 else if (handlerToExamine.key == "---") {
-                    handlerToExamine.callback(messageContainer)
+                    handlerToExamine.callback(cmd, arg)
                     handled = true;
                 }
 
@@ -247,7 +262,7 @@ namespace knockbit {
             }
 
             if (!handled && auto) {   //handle message with auto handler
-                handleMessage(cmd, args);
+                handleMessage(cmd, arg);
             }
         }
     }

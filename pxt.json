@@ -1,6 +1,6 @@
 {
     "name": "KnockBit",
-    "version": "1.0.3",
+    "version": "1.0.5",
     "description": "Control micro:bit by wechat app. The Tiny version.",
     "license": "MIT",
     "dependencies": {
@@ -9,7 +9,6 @@
     },
     "files": [
         "README.md",
-        "MessageContainer.ts",
         "main.ts"
     ],
     "testFiles": [
